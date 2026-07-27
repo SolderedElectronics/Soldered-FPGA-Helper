@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+
+<style>
+  body {
+    font-family: var(--vscode-font-family);
+    font-size: var(--vscode-font-size);
+    padding: 12px;
+    background-color: var(--vscode-sideBar-background);
+    color: var(--vscode-foreground);
+  }
+
+  h4 {
+    font-size: 15px;
+    margin-bottom: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+  }
+
+  .section {
+    margin-bottom: 24px;
+  }
+
+  label {
+    display: block;
+    margin-bottom: 6px;
+  }
+
+  input, select {
+    width: 100%;
+    padding: 4px 6px;
+    margin-bottom: 12px;
+    border-radius: 4px;
+    border: 1px solid var(--vscode-input-border);
+    background-color: var(--vscode-input-background);
+    color: var(--vscode-input-foreground);
+    font-family: var(--vscode-font-family);
+    box-sizing: border-box;
+  }
+
+  input:disabled, select:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  button {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 4px 8px;
+    margin-top: 6px;
+    margin-bottom: 6px;
+    background-color: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+    font-family: var(--vscode-font-family);
+    font-size: 12px;
+    font-weight: normal;
+    border: 1px solid var(--vscode-button-border, transparent);
+    border-radius: 4px;
+    cursor: pointer;
+    text-align: center;
+    line-height: 16px;
+  }
+
+  button:hover {
+    background-color: var(--vscode-button-hoverBackground);
+  }
+
+  button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .btn-danger {
+    background-color: var(--vscode-statusBarItem-errorBackground);
+    color: var(--vscode-statusBarItem-errorForeground);
+  }
+
+  .btn-danger:hover {
+    filter: brightness(1.15);
+  }
+
+  .buttons-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 12px;
+    align-items: stretch;
+  }
+
+  .buttons-row button {
+    flex: 1;
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+
+  .section-content {
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+    transition: max-height 0.3s ease, opacity 0.3s ease, margin-top 0.3s ease;
+    margin-top: 0;
+  }
+
+  .toggleable.open > .section-content {
+    max-height: 1000px;
+    opacity: 1;
+    margin-top: 8px;
+  }
+
+  .arrow {
+    display: inline-block;
+    margin-right: 8px;
+    transition: transform 0.2s ease-in-out;
+  }
+
+  .toggleable.open .arrow {
+    transform: rotate(90deg);
+  }
+
+  .app-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--vscode-editorGroup-border);
+    padding-bottom: 10px;
+  }
+
+  .app-logo {
+    width: 32px;
+    height: 32px;
+    filter: invert(1);
+  }
+
+  .app-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin: 0;
+    color: var(--vscode-foreground);
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    margin-bottom: 12px;
+    border-radius: 10px;
+    font-size: 11px;
+    background: var(--vscode-badge-background);
+    color: var(--vscode-badge-foreground);
+  }
+
+  .status-line {
+    font-size: 0.85em;
+    color: var(--vscode-descriptionForeground);
+    margin-top: -6px;
+    margin-bottom: 10px;
+  }
+
+  .status-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 6px;
+    background: var(--vscode-descriptionForeground);
+  }
+
+  .status-dot.connected {
+    background: var(--vscode-charts-green, #4caf50);
+  }
+
+  .task-status {
+    font-size: 0.85em;
+    margin-top: -6px;
+    margin-bottom: 10px;
+    color: var(--vscode-descriptionForeground);
+    min-height: 1.2em;
+  }
+
+  .task-status:empty {
+    display: none;
+    margin: 0;
+    min-height: 0;
+  }
+
+  .task-status.success {
+    color: var(--vscode-charts-green, #4caf50);
+  }
+
+  .task-status.error {
+    color: var(--vscode-errorForeground, #f14c4c);
+  }
+
+  @keyframes blink {
+    0% { opacity: 0.2; }
+    20% { opacity: 1; }
+    100% { opacity: 0.2; }
+  }
+
+  .dot-flash {
+    display: inline-block;
+    animation: blink 1.4s infinite;
+    font-weight: bold;
+  }
+
+  .dot-flash:nth-child(2) { animation-delay: 0.2s; }
+  .dot-flash:nth-child(3) { animation-delay: 0.4s; }
+
+  .hint-text {
+    margin-top: 6px;
+    font-size: 0.85em;
+    font-style: italic;
+    color: var(--vscode-descriptionForeground);
+  }
+</style>
+</head>
+
+<body>
+
+<div class="app-header">
+  <img src="{{fpgaIconUri}}" alt="FPGA Icon" class="app-logo">
+  <h1 class="app-title">Soldered FPGA Helper</h1>
+</div>
+
+<!-- Info & Instructions Section — collapsed by default -->
+<div class="section toggleable" id="infoSection">
+  <h4 onclick="toggleSection('infoSection')">
+    <span class="arrow">▶</span> Info & Instructions
+  </h4>
+  <div class="section-content">
+
+    <p style="margin-top: 0;">
+      <strong>Soldered FPGA Helper</strong> is a Visual Studio Code extension that helps you get started with FPGA projects for Soldered boards using a friendly graphical interface.
+    </p>
+    <p>
+      <em>Note:</em> This extension is <strong>experimental</strong> and is actively being developed.
+    </p>
+
+    <ul style="list-style-type: disc; padding-left: 20px; margin-top: 1.2rem;">
+      <li><strong>Project:</strong> New to this? Use the Project section to generate a working example (blinky) automatically.</li>
+      <li><strong>Board:</strong> Select your target board. Currently only TinyFPGA BX (iCE40LP8K) is supported.</li>
+      <li><strong>Board Port:</strong> Select the serial port your board is connected on. The board only shows up while its bootloader is active.</li>
+      <li><strong>Build &amp; Flash:</strong> Synthesize your design and program it onto the board. Opens the integrated terminal to run the toolchain — first run downloads the toolchain, so it takes longer.</li>
+    </ul>
+
+    <p style="margin-top: 1rem; font-size: 0.9em; color: var(--vscode-descriptionForeground);">
+      You can explore the source code, submit issues or pull requests, and leave feedback on the extension's GitHub page.
+    </p>
+
+  </div>
+</div>
+
+<!-- Project -->
+<div class="section toggleable open" id="projectSection">
+  <h4 onclick="toggleSection('projectSection')">
+    <span class="arrow">▶</span> Project
+  </h4>
+  <div class="section-content">
+
+    <div class="task-status success" id="projectReadyStatus" style="display:none; margin-top: 0; margin-bottom: 12px;">✓ Project ready in this folder</div>
+    <p class="hint-text" id="noWorkspaceHint" style="display:none; margin-top: 0;">No folder open yet — open an existing project or create a new one below.</p>
+
+    <button id="generateHereBtn" style="display:none;" title="Generate the starter project files (blinky example) directly in this empty folder">Generate Project Files Here</button>
+    <button id="createProjectBtn" title="Choose a location to create a new TinyFPGA BX project (blinky example)">Create New Project...</button>
+    <button id="openProjectBtn" title="Open an existing TinyFPGA BX project folder">Open Project...</button>
+    <div class="task-status" id="createProjectStatus"></div>
+
+  </div>
+</div>
+
+<!-- Board & Project Info -->
+<div class="section toggleable open" id="boardSection">
+  <h4 onclick="toggleSection('boardSection')">
+    <span class="arrow">▶</span> Board
+  </h4>
+  <div class="section-content">
+
+    <label for="boardSelect">Board:</label>
+    <select id="boardSelect">
+      <option value="tinyfpga-bx" selected>TinyFPGA BX (iCE40LP8K)</option>
+    </select>
+
+    <label for="port">Board port:</label>
+    <div style="display:flex; gap:8px; align-items:center;">
+      <select id="port" style="flex:1;">
+        <option value="" disabled selected>-- Select port --</option>
+      </select>
+      <button id="refreshPortsBtn" style="width:auto; flex-shrink:0; margin:0 0 12px 0; padding:4px 10px;" title="Refresh ports">Refresh</button>
+    </div>
+
+    <p class="hint-text">Board not showing up? Hold the button while plugging it in to enter bootloader mode — the boot LED should pulse while it's active.</p>
+
+    <div class="status-line"><span class="status-dot" id="connDot"></span><span id="connText">No board connected</span></div>
+
+  </div>
+</div>
+
+<!-- Build & Flash -->
+<div class="section toggleable open" id="buildSection">
+  <h4 onclick="toggleSection('buildSection')">
+    <span class="arrow">▶</span> Build &amp; Flash
+  </h4>
+  <div class="section-content">
+
+    <p class="hint-text" style="margin-top: 0;">Graphical Build opens a separate window — you'll need to manually click through Pack, Place and Route there to see the result.</p>
+    <div class="buttons-row">
+      <button id="buildBtn" title="Synthesize and build the bitstream">Build</button>
+      <button id="graphicalBuildBtn" title="Opens a window showing your design's layout on the chip — you'll need to click through Pack, Place and Route yourself to see the result">Graphical Build</button>
+    </div>
+    <div class="task-status" id="buildStatus"></div>
+    <div class="task-status" id="graphicalBuildStatus"></div>
+
+    <button id="flashBtn" title="Flash the built bitstream to the board">Flash</button>
+    <div class="task-status" id="flashStatus"></div>
+
+  </div>
+</div>
+
+<script>
+
+const vscode = acquireVsCodeApi();
+
+function saveToggleState() {
+  const state = { ...(vscode.getState() || {}) };
+  state.toggles = {};
+  document.querySelectorAll('.toggleable').forEach(section => {
+    state.toggles[section.id] = section.classList.contains('open');
+  });
+  vscode.setState(state);
+}
+
+function restoreToggleState() {
+  const state = vscode.getState() || {};
+  const toggles = state.toggles || {};
+  document.querySelectorAll('.toggleable').forEach(section => {
+    if (Object.prototype.hasOwnProperty.call(toggles, section.id)) {
+      section.classList.toggle('open', !!toggles[section.id]);
+    }
+  });
+}
+
+function toggleSection(id) {
+  document.getElementById(id).classList.toggle('open');
+  saveToggleState();
+}
+
+document.getElementById('refreshPortsBtn').addEventListener('click', () => {
+  vscode.postMessage({ command: 'getPorts' });
+});
+
+document.getElementById('openProjectBtn').addEventListener('click', () => {
+  vscode.postMessage({ command: 'openProject' });
+});
+
+document.getElementById('generateHereBtn').addEventListener('click', () => {
+  vscode.postMessage({ command: 'generateHere' });
+});
+
+document.getElementById('createProjectBtn').addEventListener('click', () => {
+  vscode.postMessage({ command: 'createProjectBrowse' });
+});
+
+document.getElementById('buildBtn').addEventListener('click', () => {
+  vscode.postMessage({ command: 'build' });
+});
+
+document.getElementById('flashBtn').addEventListener('click', () => {
+  vscode.postMessage({ command: 'flash' });
+});
+
+document.getElementById('graphicalBuildBtn').addEventListener('click', () => {
+  vscode.postMessage({ command: 'graphicalBuild' });
+});
+
+// === Port scanning ===
+// The extension also listens for real USB attach/detach events and pushes
+// updates immediately — this poll is just a slow safety net in case a
+// hotplug event is missed, so it stays running even after a port is picked.
+let portScanInterval = null;
+
+function startPortScanning() {
+  if (portScanInterval) return;
+  portScanInterval = setInterval(() => vscode.postMessage({ command: 'getPorts' }), 8000);
+}
+
+const flashBtnTitle = document.getElementById('flashBtn').title;
+const buildBtnTitle = document.getElementById('buildBtn').title;
+const graphicalBuildBtnTitle = document.getElementById('graphicalBuildBtn').title;
+
+// Only one apio invocation should run at a time (Build/Flash/Create Project
+// all touch the same venv and project dir) — busy disables all three,
+// connection state additionally gates Flash on top of that, and Build/Flash
+// need an open workspace (Open Project / Create New Project don't).
+let busy = false;
+let portConnected = false;
+let hasWorkspace = false;
+
+function updateButtonStates() {
+  document.getElementById('generateHereBtn').disabled = busy;
+  document.getElementById('createProjectBtn').disabled = busy;
+  document.getElementById('openProjectBtn').disabled = busy;
+
+  const buildBtn = document.getElementById('buildBtn');
+  buildBtn.disabled = busy || !hasWorkspace;
+  buildBtn.title = !hasWorkspace ? 'Open a project folder first' : buildBtnTitle;
+
+  const flashBtn = document.getElementById('flashBtn');
+  flashBtn.disabled = busy || !hasWorkspace || !portConnected;
+  flashBtn.title = !hasWorkspace ? 'Open a project folder first'
+    : !portConnected ? 'Connect a board first'
+    : flashBtnTitle;
+
+  const graphicalBuildBtn = document.getElementById('graphicalBuildBtn');
+  graphicalBuildBtn.disabled = busy || !hasWorkspace;
+  graphicalBuildBtn.title = !hasWorkspace ? 'Open a project folder first' : graphicalBuildBtnTitle;
+
+  document.getElementById('noWorkspaceHint').style.display = hasWorkspace ? 'none' : 'block';
+}
+
+let isScanning = false;
+
+function setConnectionStatus(connected) {
+  portConnected = connected;
+  document.getElementById('connDot').classList.toggle('connected', connected);
+  document.getElementById('connText').textContent = connected
+    ? 'Board connected (bootloader mode — LED pulsing)'
+    : (isScanning ? 'Detecting board…' : 'No board connected');
+  updateButtonStates();
+}
+
+function setTaskStatus(task, state, message) {
+  const el = document.getElementById(task + 'Status');
+  if (!el) return;
+
+  el.classList.remove('success', 'error');
+  if (state === 'running') {
+    el.innerHTML = 'Working<span class="dot-flash">.</span><span class="dot-flash">.</span><span class="dot-flash">.</span>';
+  } else if (state === 'success') {
+    el.textContent = '✓ Done';
+    el.classList.add('success');
+    setTimeout(() => { if (el.textContent === '✓ Done') el.textContent = ''; }, 3000);
+  } else if (state === 'error') {
+    const short = (message || 'Failed').split('\n')[0].slice(0, 140);
+    el.textContent = '✗ ' + short;
+    el.classList.add('error');
+  }
+}
+
+document.getElementById('port').addEventListener('change', (e) => {
+  const state = { ...(vscode.getState() || {}) };
+  state.port = e.target.value;
+  vscode.setState(state);
+  setConnectionStatus(!!e.target.value);
+});
+
+window.addEventListener('message', (event) => {
+  const message = event.data;
+
+  if (message.command === 'scanningState') {
+    isScanning = !!message.active;
+    if (!document.getElementById('port').value) {
+      setConnectionStatus(false);
+    }
+  }
+
+  if (message.command === 'taskStatus') {
+    busy = message.state === 'running';
+    setTaskStatus(message.task, message.state, message.message);
+    updateButtonStates();
+  }
+
+  if (message.command === 'projectContext') {
+    hasWorkspace = !!message.hasWorkspace;
+    document.getElementById('projectReadyStatus').style.display = message.ready ? 'block' : 'none';
+    document.getElementById('generateHereBtn').style.display =
+      (message.hasWorkspace && message.empty && !message.ready) ? 'block' : 'none';
+    updateButtonStates();
+  }
+
+  if (message.command === 'populatePorts') {
+    const select = document.getElementById('port');
+    const prev = (vscode.getState() || {}).port || select.value;
+    const ports = message.ports || [];
+
+    select.innerHTML = '';
+
+    const placeholder = document.createElement('option');
+    placeholder.value = '';
+    placeholder.disabled = true;
+    placeholder.textContent = '-- Select port --';
+    select.appendChild(placeholder);
+
+    ports.forEach(p => {
+      const option = document.createElement('option');
+      option.value = p;
+      option.textContent = p;
+      select.appendChild(option);
+    });
+
+    if (ports.includes(prev)) {
+      select.value = prev;
+      setConnectionStatus(true);
+    } else if (!prev && ports.length === 1) {
+      // Nothing selected yet and exactly one board showed up — just pick it.
+      select.value = ports[0];
+      const state = { ...(vscode.getState() || {}) };
+      state.port = ports[0];
+      vscode.setState(state);
+      setConnectionStatus(true);
+    } else {
+      placeholder.selected = true;
+      const state = { ...(vscode.getState() || {}) };
+      state.port = '';
+      vscode.setState(state);
+      setConnectionStatus(false);
+    }
+  }
+});
+
+updateButtonStates();
+
+window.addEventListener('load', () => {
+  restoreToggleState();
+  vscode.postMessage({ command: 'getPorts' });
+  startPortScanning();
+});
+
+</script>
+</body>
+</html>

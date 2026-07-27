@@ -1,0 +1,60 @@
+{
+  "name": "soldered-fpga-helper",
+  "displayName": "Soldered FPGA Helper",
+  "publisher": "solderedelectronics",
+  "description": "A helper extension for developing with Soldered FPGA boards directly inside Visual Studio Code.",
+  "version": "0.1.0",
+  "engines": {
+    "vscode": "^1.100.0"
+  },
+  "main": "./dist/extension.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SolderedElectronics/Soldered-FPGA-Helper"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "fpga",
+    "tinyfpga",
+    "ice40",
+    "verilog",
+    "embedded",
+    "soldered"
+  ],
+  "scripts": {
+    "vscode:prepublish": "tsc -p ./"
+  },
+  "activationEvents": [],
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "fpgaHelperView",
+          "title": "Soldered FPGA Helper",
+          "icon": "resources/fpga.svg"
+        }
+      ]
+    },
+    "views": {
+      "fpgaHelperView": [
+        {
+          "type": "webview",
+          "id": "fpgaHelperWebview",
+          "name": "",
+          "icon": "resources/fpga.svg"
+        }
+      ]
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^18.19.112",
+    "@types/vscode": "^1.100.0",
+    "typescript": "^4.9.5"
+  },
+  "dependencies": {
+    "serialport": "^13.0.0",
+    "usb": "^3.0.1"
+  }
+}

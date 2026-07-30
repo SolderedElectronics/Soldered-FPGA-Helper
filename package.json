@@ -1,9 +1,12 @@
 {
   "name": "soldered-fpga-helper",
-  "displayName": "Soldered FPGA Helper",
+  "displayName": "FPGA Helper by Soldered",
   "publisher": "solderedelectronics",
-  "description": "A helper extension for developing with Soldered FPGA boards directly inside Visual Studio Code.",
+  "author": "Soldered Electronics",
+  "description": "An extension for developing FPGA projects directly inside Visual Studio Code, with first-class support for Soldered boards.",
   "version": "0.1.0",
+  "license": "MIT",
+  "icon": "resources/icon.png",
   "engines": {
     "vscode": "^1.100.0"
   },
@@ -32,7 +35,7 @@
       "activitybar": [
         {
           "id": "fpgaHelperView",
-          "title": "Soldered FPGA Helper",
+          "title": "FPGA Helper by Soldered",
           "icon": "resources/fpga.svg"
         }
       ]

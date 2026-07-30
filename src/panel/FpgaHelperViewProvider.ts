@@ -164,6 +164,14 @@ export class FpgaHelperViewProvider implements vscode.WebviewViewProvider {
         case 'test':
           this.test();
           break;
+
+        case 'openWebsite':
+          vscode.env.openExternal(vscode.Uri.parse('https://soldered.com'));
+          break;
+
+        case 'openGithub':
+          vscode.env.openExternal(vscode.Uri.parse('https://github.com/SolderedElectronics'));
+          break;
       }
     });
   }
@@ -251,7 +259,7 @@ export class FpgaHelperViewProvider implements vscode.WebviewViewProvider {
       canSelectFiles: false,
       canSelectFolders: true,
       canSelectMany: false,
-      title: 'Open TinyFPGA BX Project'
+      title: 'Open Soldered FPGA Mini1 Project'
     }).then((picked) => {
       if (picked && picked.length > 0) {
         vscode.commands.executeCommand('vscode.openFolder', picked[0]);
@@ -303,9 +311,9 @@ export class FpgaHelperViewProvider implements vscode.WebviewViewProvider {
     const defaultParent = workspaceDir ? path.dirname(workspaceDir) : os.homedir();
 
     const picked = await vscode.window.showSaveDialog({
-      title: 'Create TinyFPGA BX Project',
+      title: 'Create Soldered FPGA Mini1 Project',
       saveLabel: 'Create Project',
-      defaultUri: vscode.Uri.file(path.join(defaultParent, 'tinyfpga-project'))
+      defaultUri: vscode.Uri.file(path.join(defaultParent, 'soldered-fpga-mini1-project'))
     });
     if (!picked) {
       return;
@@ -502,7 +510,11 @@ export class FpgaHelperViewProvider implements vscode.WebviewViewProvider {
     const iconUri = this._view?.webview.asWebviewUri(
       vscode.Uri.joinPath(this.context.extensionUri, 'resources', 'fpga.svg')
     );
-    html = html.replace('{{fpgaIconUri}}', iconUri?.toString() || '');
+    const solderedIconUri = this._view?.webview.asWebviewUri(
+      vscode.Uri.joinPath(this.context.extensionUri, 'resources', 'soldered-logo.svg')
+    );
+    html = html.split('{{fpgaIconUri}}').join(iconUri?.toString() || '');
+    html = html.split('{{solderedIconUri}}').join(solderedIconUri?.toString() || '');
     return html;
   }
 }

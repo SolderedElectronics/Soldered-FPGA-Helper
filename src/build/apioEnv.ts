@@ -115,6 +115,25 @@ export async function graphicalBuild(
   await runStreamed(apioBin(context), ['build', '-p', projectDir, '--gui'], out);
 }
 
+export async function simulateProject(
+  context: vscode.ExtensionContext,
+  projectDir: string,
+  out: ProcessOutput
+): Promise<void> {
+  await ensureApioInstalled(context, out);
+  out.write('Opening GTKWave — close its window when done.\r\n');
+  await runStreamed(apioBin(context), ['sim', '-p', projectDir], out);
+}
+
+export async function testProject(
+  context: vscode.ExtensionContext,
+  projectDir: string,
+  out: ProcessOutput
+): Promise<void> {
+  await ensureApioInstalled(context, out);
+  await runStreamed(apioBin(context), ['test', '-p', projectDir], out);
+}
+
 export async function createProject(
   context: vscode.ExtensionContext,
   projectDir: string,

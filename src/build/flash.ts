@@ -11,7 +11,7 @@ function loaderBin(context: vscode.ExtensionContext): string {
   );
 }
 
-export async function flashProject(
+export async function uploadProject(
   context: vscode.ExtensionContext,
   projectDir: string,
   out: ProcessOutput
@@ -29,6 +29,6 @@ export async function flashProject(
   await buildProject(context, projectDir, out);
 
   const bitstream = bitstreamPath(projectDir);
-  out.write('\r\nMake sure the board is in bootloader mode before flashing.\r\n');
+  out.write('\r\nMake sure the board is in bootloader mode before uploading.\r\n');
   await runStreamed(loader, ['-b', 'tinyFPGABX', bitstream], out);
 }

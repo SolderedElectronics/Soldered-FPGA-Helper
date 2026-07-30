@@ -4,9 +4,10 @@ import * as fs from 'fs';
 import * as os from 'os';
 import { SerialPort } from 'serialport';
 import { usb } from 'usb';
-import { buildProject, createProject, hasApioProject, isApioInstalled, isEmptyDir, ProcessError, graphicalBuild } from '../build/apioEnv';
-import { flashProject } from '../build/flash';
+import { buildProject, createProject, hasApioProject, isApioInstalled, isEmptyDir, ProcessError, graphicalBuild, simulateProject, testProject } from '../build/apioEnv';
+import { uploadProject } from '../build/flash';
 import { runInTerminal } from '../build/taskTerminal';
+import { listExamples, copyExampleProject } from '../build/examples';
 
 const IGNORED_PORT_PATTERNS = ['debug-console', 'Bluetooth-Incoming-Port'];
 const NO_BOARD_SIGNATURES = ['no cable detected', 'found 0 devices', 'no device found'];
@@ -140,16 +141,28 @@ export class FpgaHelperViewProvider implements vscode.WebviewViewProvider {
           this.createProjectBrowse();
           break;
 
+        case 'createProjectFromExample':
+          this.createProjectFromExample();
+          break;
+
         case 'build':
           this.build();
           break;
 
-        case 'flash':
-          this.flash();
+        case 'upload':
+          this.upload();
           break;
 
         case 'graphicalBuild':
           this.graphicalBuild();
+          break;
+
+        case 'simulate':
+          this.simulate();
+          break;
+
+        case 'test':
+          this.test();
           break;
       }
     });
@@ -281,7 +294,7 @@ export class FpgaHelperViewProvider implements vscode.WebviewViewProvider {
 
     this.runCreateProject(dir, () => {
       this.reportProjectContext();
-      vscode.window.showInformationMessage('Project ready! Click Build, then Flash to program your board.');
+      vscode.window.showInformationMessage('Project ready! Click Build & Upload to program your board.');
     });
   }
 
@@ -310,10 +323,59 @@ export class FpgaHelperViewProvider implements vscode.WebviewViewProvider {
 
     this.runCreateProject(targetDir, () => {
       vscode.window.showInformationMessage(
-        `Project created at ${targetDir} — opening it now. Once it's open, click Build, then Flash.`
+        `Project created at ${targetDir} — opening it now. Once it's open, click Build & Upload.`
       );
       vscode.commands.executeCommand('vscode.openFolder', vscode.Uri.file(targetDir));
     });
+  }
+
+  private async createProjectFromExample(): Promise<void> {
+    const examples = listExamples();
+    if (examples.length === 0) {
+      vscode.window.showErrorMessage('No example projects found on disk.');
+      return;
+    }
+
+    const picked = await vscode.window.showQuickPick(
+      examples.map(example => ({ label: example.id, example })),
+      { title: 'Choose an Example Project' }
+    );
+    if (!picked) {
+      return;
+    }
+
+    const workspaceDir = this.getWorkspaceDir();
+    const defaultParent = workspaceDir ? path.dirname(workspaceDir) : os.homedir();
+
+    const target = await vscode.window.showSaveDialog({
+      title: 'Create Project From Example',
+      saveLabel: 'Create Project',
+      defaultUri: vscode.Uri.file(path.join(defaultParent, picked.example.id))
+    });
+    if (!target) {
+      return;
+    }
+
+    const targetDir = target.fsPath;
+    if (fs.existsSync(targetDir) && !isEmptyDir(targetDir)) {
+      vscode.window.showErrorMessage('That folder already has files in it. Pick an empty or new folder.');
+      return;
+    }
+    fs.mkdirSync(targetDir, { recursive: true });
+
+    this.reportTaskStatus('createProject', 'running');
+    try {
+      copyExampleProject(picked.example.dir, targetDir);
+      this.reportTaskStatus('createProject', 'success');
+      vscode.window.showInformationMessage(
+        `Project created at ${targetDir} — opening it now. Once it's open, click Build & Upload.`
+      );
+      vscode.commands.executeCommand('vscode.openFolder', vscode.Uri.file(targetDir));
+    } catch (err: any) {
+      const snippet = extractErrorSnippet(err);
+      this.reportTaskStatus('createProject', 'error', snippet);
+      vscode.window.showErrorMessage(`Couldn't create the project: ${snippet}`);
+    }
   }
 
   private async offerCreateProjectIfMissing(projectDir: string): Promise<boolean> {
@@ -370,10 +432,10 @@ export class FpgaHelperViewProvider implements vscode.WebviewViewProvider {
     });
   }
 
-  private async flash(): Promise<void> {
+  private async upload(): Promise<void> {
     const projectDir = this.getWorkspaceDir();
     if (!projectDir) {
-      vscode.window.showErrorMessage('Open the folder containing your apio project (apio.ini) before flashing.');
+      vscode.window.showErrorMessage('Open the folder containing your apio project (apio.ini) before uploading.');
       return;
     }
     if (!await this.offerCreateProjectIfMissing(projectDir)) {
@@ -383,16 +445,54 @@ export class FpgaHelperViewProvider implements vscode.WebviewViewProvider {
       return;
     }
 
-    this.reportTaskStatus('flash', 'running');
-    runInTerminal('FPGA Helper: Flash', (out) => flashProject(this.context, projectDir, out), (err) => {
+    this.reportTaskStatus('upload', 'running');
+    runInTerminal('FPGA Helper: Upload', (out) => uploadProject(this.context, projectDir, out), (err) => {
       if (err && looksLikeNoBoardFound(err)) {
-        this.reportTaskStatus('flash', 'error', 'Board not found');
+        this.reportTaskStatus('upload', 'error', 'Board not found');
         vscode.window.showWarningMessage(
           "Board not found. Make sure it's in bootloader mode — hold the button while plugging it in."
         );
         return;
       }
-      this.reportTaskStatus('flash', err ? 'error' : 'success', err ? extractErrorSnippet(err) : undefined);
+      this.reportTaskStatus('upload', err ? 'error' : 'success', err ? extractErrorSnippet(err) : undefined);
+    });
+  }
+
+  private async simulate(): Promise<void> {
+    const projectDir = this.getWorkspaceDir();
+    if (!projectDir) {
+      vscode.window.showErrorMessage('Open the folder containing your apio project (apio.ini) before simulating.');
+      return;
+    }
+    if (!await this.offerCreateProjectIfMissing(projectDir)) {
+      return;
+    }
+    if (!await this.confirmFirstRunIfNeeded()) {
+      return;
+    }
+
+    this.reportTaskStatus('simulate', 'running');
+    runInTerminal('FPGA Helper: Simulate', (out) => simulateProject(this.context, projectDir, out), (err) => {
+      this.reportTaskStatus('simulate', err ? 'error' : 'success', err ? extractErrorSnippet(err) : undefined);
+    });
+  }
+
+  private async test(): Promise<void> {
+    const projectDir = this.getWorkspaceDir();
+    if (!projectDir) {
+      vscode.window.showErrorMessage('Open the folder containing your apio project (apio.ini) before running tests.');
+      return;
+    }
+    if (!await this.offerCreateProjectIfMissing(projectDir)) {
+      return;
+    }
+    if (!await this.confirmFirstRunIfNeeded()) {
+      return;
+    }
+
+    this.reportTaskStatus('test', 'running');
+    runInTerminal('FPGA Helper: Test', (out) => testProject(this.context, projectDir, out), (err) => {
+      this.reportTaskStatus('test', err ? 'error' : 'success', err ? extractErrorSnippet(err) : undefined);
     });
   }
 

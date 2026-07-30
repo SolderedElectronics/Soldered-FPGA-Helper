@@ -83,6 +83,12 @@
     filter: brightness(1.15);
   }
 
+  .divider {
+    border: none;
+    border-top: 1px solid var(--vscode-editorGroup-border);
+    margin: 12px 0;
+  }
+
   .buttons-row {
     display: flex;
     flex-wrap: wrap;
@@ -244,7 +250,7 @@
       <li><strong>Project:</strong> New to this? Use the Project section to generate a working example (blinky) automatically.</li>
       <li><strong>Board:</strong> Select your target board. Currently only TinyFPGA BX (iCE40LP8K) is supported.</li>
       <li><strong>Board Port:</strong> Select the serial port your board is connected on. The board only shows up while its bootloader is active.</li>
-      <li><strong>Build &amp; Flash:</strong> Synthesize your design and program it onto the board. Opens the integrated terminal to run the toolchain — first run downloads the toolchain, so it takes longer.</li>
+      <li><strong>Build &amp; Upload:</strong> Synthesize your design and program it onto the board. Opens the integrated terminal to run the toolchain — first run downloads the toolchain, so it takes longer.</li>
     </ul>
 
     <p style="margin-top: 1rem; font-size: 0.9em; color: var(--vscode-descriptionForeground);">
@@ -265,7 +271,13 @@
     <p class="hint-text" id="noWorkspaceHint" style="display:none; margin-top: 0;">No folder open yet — open an existing project or create a new one below.</p>
 
     <button id="generateHereBtn" style="display:none;" title="Generate the starter project files (blinky example) directly in this empty folder">Generate Project Files Here</button>
-    <button id="createProjectBtn" title="Choose a location to create a new TinyFPGA BX project (blinky example)">Create New Project...</button>
+    <div class="buttons-row">
+      <button id="createProjectBtn" title="Choose a location to create a new TinyFPGA BX project (blinky example)">Create New Project...</button>
+      <button id="createProjectFromExampleBtn" title="Pick a tutorial example and create a new project from it">Create Project from Example...</button>
+    </div>
+
+    <hr class="divider">
+
     <button id="openProjectBtn" title="Open an existing TinyFPGA BX project folder">Open Project...</button>
     <div class="task-status" id="createProjectStatus"></div>
 
@@ -299,10 +311,28 @@
   </div>
 </div>
 
-<!-- Build & Flash -->
+<!-- Simulation & Test -->
+<div class="section toggleable open" id="simTestSection">
+  <h4 onclick="toggleSection('simTestSection')">
+    <span class="arrow">▶</span> Simulation &amp; Test
+  </h4>
+  <div class="section-content">
+
+    <p class="hint-text" style="margin-top: 0;">Requires a testbench file (named *_tb.v) in the project. Simulate opens the waveform in GTKWave; Run Tests checks pass/fail headlessly.</p>
+    <div class="buttons-row">
+      <button id="simulateBtn" title="Simulate the default testbench and view the waveform in GTKWave">Simulate</button>
+      <button id="testBtn" title="Run the project's testbench(es) headlessly and report pass/fail">Run Tests</button>
+    </div>
+    <div class="task-status" id="simulateStatus"></div>
+    <div class="task-status" id="testStatus"></div>
+
+  </div>
+</div>
+
+<!-- Build & Upload -->
 <div class="section toggleable open" id="buildSection">
   <h4 onclick="toggleSection('buildSection')">
-    <span class="arrow">▶</span> Build &amp; Flash
+    <span class="arrow">▶</span> Build &amp; Upload
   </h4>
   <div class="section-content">
 
@@ -314,8 +344,10 @@
     <div class="task-status" id="buildStatus"></div>
     <div class="task-status" id="graphicalBuildStatus"></div>
 
-    <button id="flashBtn" title="Flash the built bitstream to the board">Flash</button>
-    <div class="task-status" id="flashStatus"></div>
+    <hr class="divider">
+
+    <button id="buildUploadBtn" title="Build the project and upload the bitstream to the board">Build &amp; Upload</button>
+    <div class="task-status" id="uploadStatus"></div>
 
   </div>
 </div>
@@ -364,16 +396,28 @@ document.getElementById('createProjectBtn').addEventListener('click', () => {
   vscode.postMessage({ command: 'createProjectBrowse' });
 });
 
+document.getElementById('createProjectFromExampleBtn').addEventListener('click', () => {
+  vscode.postMessage({ command: 'createProjectFromExample' });
+});
+
 document.getElementById('buildBtn').addEventListener('click', () => {
   vscode.postMessage({ command: 'build' });
 });
 
-document.getElementById('flashBtn').addEventListener('click', () => {
-  vscode.postMessage({ command: 'flash' });
+document.getElementById('buildUploadBtn').addEventListener('click', () => {
+  vscode.postMessage({ command: 'upload' });
 });
 
 document.getElementById('graphicalBuildBtn').addEventListener('click', () => {
   vscode.postMessage({ command: 'graphicalBuild' });
+});
+
+document.getElementById('simulateBtn').addEventListener('click', () => {
+  vscode.postMessage({ command: 'simulate' });
+});
+
+document.getElementById('testBtn').addEventListener('click', () => {
+  vscode.postMessage({ command: 'test' });
 });
 
 // === Port scanning ===
@@ -387,13 +431,15 @@ function startPortScanning() {
   portScanInterval = setInterval(() => vscode.postMessage({ command: 'getPorts' }), 8000);
 }
 
-const flashBtnTitle = document.getElementById('flashBtn').title;
+const buildUploadBtnTitle = document.getElementById('buildUploadBtn').title;
 const buildBtnTitle = document.getElementById('buildBtn').title;
 const graphicalBuildBtnTitle = document.getElementById('graphicalBuildBtn').title;
+const simulateBtnTitle = document.getElementById('simulateBtn').title;
+const testBtnTitle = document.getElementById('testBtn').title;
 
-// Only one apio invocation should run at a time (Build/Flash/Create Project
+// Only one apio invocation should run at a time (Build/Upload/Create Project
 // all touch the same venv and project dir) — busy disables all three,
-// connection state additionally gates Flash on top of that, and Build/Flash
+// connection state additionally gates Upload on top of that, and Build/Upload
 // need an open workspace (Open Project / Create New Project don't).
 let busy = false;
 let portConnected = false;
@@ -402,21 +448,30 @@ let hasWorkspace = false;
 function updateButtonStates() {
   document.getElementById('generateHereBtn').disabled = busy;
   document.getElementById('createProjectBtn').disabled = busy;
+  document.getElementById('createProjectFromExampleBtn').disabled = busy;
   document.getElementById('openProjectBtn').disabled = busy;
 
   const buildBtn = document.getElementById('buildBtn');
   buildBtn.disabled = busy || !hasWorkspace;
   buildBtn.title = !hasWorkspace ? 'Open a project folder first' : buildBtnTitle;
 
-  const flashBtn = document.getElementById('flashBtn');
-  flashBtn.disabled = busy || !hasWorkspace || !portConnected;
-  flashBtn.title = !hasWorkspace ? 'Open a project folder first'
+  const buildUploadBtn = document.getElementById('buildUploadBtn');
+  buildUploadBtn.disabled = busy || !hasWorkspace || !portConnected;
+  buildUploadBtn.title = !hasWorkspace ? 'Open a project folder first'
     : !portConnected ? 'Connect a board first'
-    : flashBtnTitle;
+    : buildUploadBtnTitle;
 
   const graphicalBuildBtn = document.getElementById('graphicalBuildBtn');
   graphicalBuildBtn.disabled = busy || !hasWorkspace;
   graphicalBuildBtn.title = !hasWorkspace ? 'Open a project folder first' : graphicalBuildBtnTitle;
+
+  const simulateBtn = document.getElementById('simulateBtn');
+  simulateBtn.disabled = busy || !hasWorkspace;
+  simulateBtn.title = !hasWorkspace ? 'Open a project folder first' : simulateBtnTitle;
+
+  const testBtn = document.getElementById('testBtn');
+  testBtn.disabled = busy || !hasWorkspace;
+  testBtn.title = !hasWorkspace ? 'Open a project folder first' : testBtnTitle;
 
   document.getElementById('noWorkspaceHint').style.display = hasWorkspace ? 'none' : 'block';
 }

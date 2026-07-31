@@ -110,6 +110,12 @@ export class FpgaHelperViewProvider implements vscode.WebviewViewProvider {
 
     webviewView.onDidChangeVisibility(() => {
       if (webviewView.visible) {
+        // Force a resend even if the port list is unchanged from our side:
+        // if the webview's page got reloaded while hidden (no
+        // retainContextWhenHidden, or a window reload), its <select> is
+        // back to empty and needs repopulating regardless of whether
+        // anything actually changed on the OS side.
+        this.lastPorts = [];
         this.refreshPorts();
         this.reportProjectContext();
       }

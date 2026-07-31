@@ -18,11 +18,11 @@ function apioBin(context: vscode.ExtensionContext): string {
     : path.join(dir, 'bin', 'apio');
 }
 
-function pipBin(context: vscode.ExtensionContext): string {
+function venvPython(context: vscode.ExtensionContext): string {
   const dir = venvDir(context);
   return process.platform === 'win32'
-    ? path.join(dir, 'Scripts', 'pip.exe')
-    : path.join(dir, 'bin', 'pip');
+    ? path.join(dir, 'Scripts', 'python.exe')
+    : path.join(dir, 'bin', 'python');
 }
 
 function findSystemPython(): string {
@@ -74,7 +74,11 @@ async function ensureApioInstalled(context: vscode.ExtensionContext, out: Proces
     out.write('Setting up FPGA build environment (first run only)...\r\n');
     const python = findSystemPython();
     await runStreamed(python, ['-m', 'venv', dir], out);
-    await runStreamed(pipBin(context), ['install', '--upgrade', 'pip', 'apio'], out);
+    // Invoke pip as `python -m pip`, not pip.exe directly: on Windows pip
+    // refuses to overwrite its own running executable when upgrading itself,
+    // erroring with "To modify pip, please run the following command: ...".
+    // `python -m pip` replaces a module instead of a running exe, so it works.
+    await runStreamed(venvPython(context), ['-m', 'pip', 'install', '--upgrade', 'pip', 'apio'], out);
   }
 
   await runStreamed(apioBin(context), ['packages', 'install'], out);

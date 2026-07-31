@@ -191,11 +191,13 @@ void TinyProg::disconnect()
 		delete _uart;
 		_uart = nullptr;
 	}
+#ifdef __APPLE__
 	if (_usb) {
 		_usb->disconnect();
 		delete _usb;
 		_usb = nullptr;
 	}
+#endif
 }
 
 void TinyProg::detect_cable(const cable_t &cable)

@@ -1,0 +1,8 @@
+#!/bin/sh
+# CMake's default archiver on macOS (BSD ar) can't read @response-file
+# argument lists that CMake emits for some targets; zig's ar is llvm-ar and
+# supports them, so use it uniformly for all cross-compiled static libs.
+# --format=gnu is required: for Windows targets llvm-ar otherwise emits a
+# COFF-style archive whose symbol index lld-link's mingw driver can't use,
+# silently causing "undefined symbol" for functions that ARE in the archive.
+exec zig ar --format=gnu "$@"

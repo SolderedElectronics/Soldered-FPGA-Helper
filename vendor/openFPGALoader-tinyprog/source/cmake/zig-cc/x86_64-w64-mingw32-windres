@@ -1,0 +1,16 @@
+#!/bin/sh
+# zig bundles its own mingw headers (incl. winresrc.h) separately from any
+# system windres; point llvm-windres (ships with LLVM, GNU-windres compatible)
+# at zig's header dir so .rc files that pull in winresrc.h resolve.
+ZIG_LIBC_DIR=$(zig env 2>/dev/null | sed -n 's/.*\.lib_dir = "\(.*\)",/\1/p')
+WINDRES=$(command -v llvm-windres || command -v x86_64-w64-mingw32-windres)
+if [ -z "$WINDRES" ]; then
+  for p in /opt/homebrew/opt/llvm*/bin/llvm-windres /usr/local/opt/llvm*/bin/llvm-windres; do
+    [ -x "$p" ] && WINDRES="$p" && break
+  done
+fi
+if [ -z "$WINDRES" ]; then
+  echo "x86_64-w64-mingw32-windres wrapper: no llvm-windres found (brew install llvm)" >&2
+  exit 1
+fi
+exec "$WINDRES" -I"${ZIG_LIBC_DIR}/libc/include/any-windows-any" "$@"

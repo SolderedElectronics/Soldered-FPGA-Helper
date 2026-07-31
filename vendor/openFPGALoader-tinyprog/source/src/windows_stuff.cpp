@@ -15,6 +15,7 @@
 #include <cstdint>
 #include <ios>
 #include <iomanip>
+#include <sstream>
 #include <string>
 #include <vector>
 

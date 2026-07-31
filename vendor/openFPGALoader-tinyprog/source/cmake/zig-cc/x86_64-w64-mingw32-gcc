@@ -1,0 +1,7 @@
+#!/bin/sh
+# Drop-in mingw C compiler backed by `zig cc`. See ../../README-zig-crossbuild.md.
+# -fno-sanitize=undefined: zig cc enables a UBSan-with-runtime-handlers set by
+# default at -O0 (its "Debug"-equivalent mode); those runtime handler symbols
+# aren't linked in automatically when this wrapper is only used to build
+# static libs, causing "undefined symbol: __ubsan_handle_*" at final link.
+exec zig cc -target x86_64-windows-gnu -fno-sanitize=undefined "$@"

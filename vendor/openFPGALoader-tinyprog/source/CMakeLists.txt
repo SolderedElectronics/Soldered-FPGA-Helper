@@ -618,14 +618,28 @@ if (ENABLE_TINYPROG)
 	)
 	add_definitions(-DENABLE_TINYPROG=1)
 	add_definitions(-DENABLE_CPP_HTTPLIB=1)
+	# CPPHTTPLIB_OPENSSL_SUPPORT only makes sense when OpenSSL was actually
+	# found (see OPENSSL_FOUND-gated linking below) — without it, httplib.h's
+	# OpenSSL codepaths won't have headers/libs to build against. Cross-compile
+	# toolchains commonly lack an OpenSSL build for the target, in which case
+	# the tinyprog firmware-update-check (HTTPS) feature is simply unavailable;
+	# core flashing and the blank-bootmeta fallback are unaffected.
 	if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DCPPHTTPLIB_OPENSSL_SUPPORT")
+		if (OPENSSL_FOUND)
+			set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DCPPHTTPLIB_OPENSSL_SUPPORT")
+		endif()
 		list (APPEND OPENFPGALOADER_SOURCE src/windows_stuff.cpp)
 		list (APPEND OPENFPGALOADER_HEADERS src/windows_stuff.hpp)
 	elseif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -DCPPHTTPLIB_OPENSSL_SUPPORT")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+		if (OPENSSL_FOUND)
+			set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DCPPHTTPLIB_OPENSSL_SUPPORT")
+		endif()
 	elseif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -DCPPHTTPLIB_OPENSSL_SUPPORT")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+		if (OPENSSL_FOUND)
+			set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DCPPHTTPLIB_OPENSSL_SUPPORT")
+		endif()
 		find_library(SECURITY_LIBRARY "Security")
 		find_library(IOKIT_LIBRARY "IOKit")
 		find_library(COREFOUNDATION_LIBRARY "CoreFoundation")

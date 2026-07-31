@@ -5,3 +5,4 @@ node_modules/
 .vscode-test/
 Soldered-MicroPython-Helper-main/
 .DS_Store
+vendor/openFPGALoader-tinyprog/source/build*/

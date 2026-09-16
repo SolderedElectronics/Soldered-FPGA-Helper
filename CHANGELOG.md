@@ -4,6 +4,12 @@ All notable changes to this extension are documented here.
 
 ## [Unreleased]
 
+## [1.0.5]
+
+### Fixed
+- Updated the activity bar icon to the logic gate design with a Soldered S cutout, matching the marketplace icon.
+- Fixed the local F5 debug build task, which still referenced the renamed `vscode:prepublish` script.
+
 ## [1.0.4]
 
 ### Fixed

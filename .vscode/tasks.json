@@ -3,7 +3,7 @@
   "tasks": [
     {
       "type": "npm",
-      "script": "vscode:prepublish",
+      "script": "compile",
       "group": {
         "kind": "build",
         "isDefault": true

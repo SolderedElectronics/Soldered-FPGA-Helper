@@ -4,6 +4,12 @@ All notable changes to this extension are documented here.
 
 ## [Unreleased]
 
+## [1.0.1]
+
+### Fixed
+- Replaced the marketplace icon (was the plain Soldered logo) with the FPGA chip icon.
+- Fixed the release workflow racing all platform targets in parallel on a brand-new extension's first publish, which left some platforms (including Mac Silicon) without a working package.
+
 ## [1.0.0]
 
 ### Fixed

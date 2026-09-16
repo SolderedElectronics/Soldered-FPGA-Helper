@@ -4,6 +4,11 @@ All notable changes to this extension are documented here.
 
 ## [Unreleased]
 
+## [1.0.7]
+
+### Fixed
+- Enlarged the activity bar icon glyph.
+
 ## [1.0.6]
 
 ### Fixed

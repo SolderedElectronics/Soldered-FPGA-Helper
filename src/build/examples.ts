@@ -1,10 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-// Not bundled with the extension yet — these tutorial examples only exist on
-// this dev machine, so point straight at the on-disk folder for now.
-const EXAMPLES_ROOT = '/Users/fran/fpga/tutorial';
-
 const EXCLUDED_ENTRIES = new Set(['_build', '.venv', '.DS_Store', '.git']);
 
 export interface ExampleProject {
@@ -12,13 +8,14 @@ export interface ExampleProject {
   dir: string;
 }
 
-export function listExamples(): ExampleProject[] {
-  if (!fs.existsSync(EXAMPLES_ROOT)) {
+export function listExamples(extensionPath: string): ExampleProject[] {
+  const examplesRoot = path.join(extensionPath, 'examples');
+  if (!fs.existsSync(examplesRoot)) {
     return [];
   }
-  return fs.readdirSync(EXAMPLES_ROOT, { withFileTypes: true })
+  return fs.readdirSync(examplesRoot, { withFileTypes: true })
     .filter(entry => entry.isDirectory())
-    .map(entry => ({ id: entry.name, dir: path.join(EXAMPLES_ROOT, entry.name) }))
+    .map(entry => ({ id: entry.name, dir: path.join(examplesRoot, entry.name) }))
     .filter(example => fs.existsSync(path.join(example.dir, 'apio.ini')))
     .sort((a, b) => a.id.localeCompare(b.id));
 }

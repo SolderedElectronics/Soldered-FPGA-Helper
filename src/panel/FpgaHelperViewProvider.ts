@@ -340,7 +340,7 @@ export class FpgaHelperViewProvider implements vscode.WebviewViewProvider {
   }
 
   private async createProjectFromExample(): Promise<void> {
-    const examples = listExamples();
+    const examples = listExamples(this.context.extensionPath);
     if (examples.length === 0) {
       vscode.window.showErrorMessage('No example projects found on disk.');
       return;

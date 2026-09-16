@@ -261,7 +261,7 @@ export class FpgaHelperViewProvider implements vscode.WebviewViewProvider {
       canSelectFiles: false,
       canSelectFolders: true,
       canSelectMany: false,
-      title: 'Open Soldered FPGA Mini1 Project'
+      title: 'Open TinyFPGA MINI1 Project'
     }).then((picked) => {
       if (picked && picked.length > 0) {
         vscode.commands.executeCommand('vscode.openFolder', picked[0]);
@@ -313,9 +313,9 @@ export class FpgaHelperViewProvider implements vscode.WebviewViewProvider {
     const defaultParent = workspaceDir ? path.dirname(workspaceDir) : os.homedir();
 
     const picked = await vscode.window.showSaveDialog({
-      title: 'Create Soldered FPGA Mini1 Project',
+      title: 'Create TinyFPGA MINI1 Project',
       saveLabel: 'Create Project',
-      defaultUri: vscode.Uri.file(path.join(defaultParent, 'soldered-fpga-mini1-project'))
+      defaultUri: vscode.Uri.file(path.join(defaultParent, 'tinyfpga-mini1-project'))
     });
     if (!picked) {
       return;

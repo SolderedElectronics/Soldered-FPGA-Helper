@@ -362,7 +362,7 @@
 
     <ul style="list-style-type: disc; padding-left: 20px; margin-top: 1.2rem;">
       <li><strong>Project:</strong> New to this? Use the Project section to generate a working example (blinky) automatically.</li>
-      <li><strong>Board:</strong> Select your target board. Currently only Soldered FPGA Mini1 is supported.</li>
+      <li><strong>Board:</strong> Select your target board. Currently only TinyFPGA MINI1 is supported.</li>
       <li><strong>Board Port:</strong> Select the serial port your board is connected on. The board only shows up while its bootloader is active.</li>
       <li><strong>Build &amp; Upload:</strong> Synthesize your design and program it onto the board. Opens the integrated terminal to run the toolchain — first run downloads the toolchain, so it takes longer.</li>
     </ul>
@@ -386,13 +386,13 @@
 
     <button id="generateHereBtn" style="display:none;" title="Generate the starter project files (blinky example) directly in this empty folder">Generate Project Files Here</button>
     <div class="buttons-row">
-      <button id="createProjectBtn" title="Choose a location to create a new Soldered FPGA Mini1 project (blinky example)">Create New Project...</button>
+      <button id="createProjectBtn" title="Choose a location to create a new TinyFPGA MINI1 project (blinky example)">Create New Project...</button>
       <button id="createProjectFromExampleBtn" title="Pick a tutorial example and create a new project from it">Create Project from Example...</button>
     </div>
 
     <hr class="divider">
 
-    <button id="openProjectBtn" title="Open an existing Soldered FPGA Mini1 project folder">Open Project...</button>
+    <button id="openProjectBtn" title="Open an existing TinyFPGA MINI1 project folder">Open Project...</button>
     <div class="task-status" id="createProjectStatus"></div>
 
   </div>
@@ -407,7 +407,7 @@
 
     <label for="boardSelect">Board:</label>
     <select id="boardSelect">
-      <option value="tinyfpga-bx" selected>Soldered FPGA Mini1</option>
+      <option value="tinyfpga-bx" selected>TinyFPGA MINI1</option>
     </select>
 
     <label for="port">Board port:</label>

@@ -109,16 +109,6 @@ export async function buildProject(
   await runStreamed(apioBin(context), ['build', '-p', projectDir], out);
 }
 
-export async function graphicalBuild(
-  context: vscode.ExtensionContext,
-  projectDir: string,
-  out: ProcessOutput
-): Promise<void> {
-  await ensureApioInstalled(context, out);
-  out.write('Opening nextpnr — use its Pack/Place/Route controls to run through the design.\r\n');
-  await runStreamed(apioBin(context), ['build', '-p', projectDir, '--gui'], out);
-}
-
 export async function simulateProject(
   context: vscode.ExtensionContext,
   projectDir: string,

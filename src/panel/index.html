@@ -450,13 +450,10 @@
   </h4>
   <div class="section-content">
 
-    <p class="hint-text" style="margin-top: 0;">Graphical Build opens a separate window — you'll need to manually click through Pack, Place and Route there to see the result.</p>
     <div class="buttons-row">
       <button id="buildBtn" title="Synthesize and build the bitstream">Build</button>
-      <button id="graphicalBuildBtn" title="Opens a window showing your design's layout on the chip — you'll need to click through Pack, Place and Route yourself to see the result">Graphical Build</button>
     </div>
     <div class="task-status" id="buildStatus"></div>
-    <div class="task-status" id="graphicalBuildStatus"></div>
 
     <hr class="divider">
 
@@ -552,10 +549,6 @@ document.getElementById('buildUploadBtn').addEventListener('click', () => {
   vscode.postMessage({ command: 'upload' });
 });
 
-document.getElementById('graphicalBuildBtn').addEventListener('click', () => {
-  vscode.postMessage({ command: 'graphicalBuild' });
-});
-
 document.getElementById('simulateBtn').addEventListener('click', () => {
   vscode.postMessage({ command: 'simulate' });
 });
@@ -577,7 +570,6 @@ function startPortScanning() {
 
 const buildUploadBtnTitle = document.getElementById('buildUploadBtn').title;
 const buildBtnTitle = document.getElementById('buildBtn').title;
-const graphicalBuildBtnTitle = document.getElementById('graphicalBuildBtn').title;
 const simulateBtnTitle = document.getElementById('simulateBtn').title;
 const testBtnTitle = document.getElementById('testBtn').title;
 
@@ -604,10 +596,6 @@ function updateButtonStates() {
   buildUploadBtn.title = !hasWorkspace ? 'Open a project folder first'
     : !portConnected ? 'Connect a board first'
     : buildUploadBtnTitle;
-
-  const graphicalBuildBtn = document.getElementById('graphicalBuildBtn');
-  graphicalBuildBtn.disabled = busy || !hasWorkspace;
-  graphicalBuildBtn.title = !hasWorkspace ? 'Open a project folder first' : graphicalBuildBtnTitle;
 
   const simulateBtn = document.getElementById('simulateBtn');
   simulateBtn.disabled = busy || !hasWorkspace;

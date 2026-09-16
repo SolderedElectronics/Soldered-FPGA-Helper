@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import { SerialPort } from 'serialport';
 import { usb } from 'usb';
-import { buildProject, createProject, hasApioProject, isApioInstalled, isEmptyDir, ProcessError, graphicalBuild, simulateProject, testProject } from '../build/apioEnv';
+import { buildProject, createProject, hasApioProject, isApioInstalled, isEmptyDir, ProcessError, simulateProject, testProject } from '../build/apioEnv';
 import { uploadProject } from '../build/flash';
 import { runInTerminal } from '../build/taskTerminal';
 import { listExamples, copyExampleProject } from '../build/examples';
@@ -157,10 +157,6 @@ export class FpgaHelperViewProvider implements vscode.WebviewViewProvider {
 
         case 'upload':
           this.upload();
-          break;
-
-        case 'graphicalBuild':
-          this.graphicalBuild();
           break;
 
         case 'simulate':
@@ -424,25 +420,6 @@ export class FpgaHelperViewProvider implements vscode.WebviewViewProvider {
     this.reportTaskStatus('build', 'running');
     runInTerminal('FPGA Helper: Build', (out) => buildProject(this.context, projectDir, out), (err) => {
       this.reportTaskStatus('build', err ? 'error' : 'success', err ? extractErrorSnippet(err) : undefined);
-    });
-  }
-
-  private async graphicalBuild(): Promise<void> {
-    const projectDir = this.getWorkspaceDir();
-    if (!projectDir) {
-      vscode.window.showErrorMessage('Open the folder containing your apio project (apio.ini) before viewing it.');
-      return;
-    }
-    if (!await this.offerCreateProjectIfMissing(projectDir)) {
-      return;
-    }
-    if (!await this.confirmFirstRunIfNeeded()) {
-      return;
-    }
-
-    this.reportTaskStatus('graphicalBuild', 'running');
-    runInTerminal('FPGA Helper: Graphical Build', (out) => graphicalBuild(this.context, projectDir, out), (err) => {
-      this.reportTaskStatus('graphicalBuild', err ? 'error' : 'success', err ? extractErrorSnippet(err) : undefined);
     });
   }
 

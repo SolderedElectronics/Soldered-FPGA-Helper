@@ -4,6 +4,11 @@ All notable changes to this extension are documented here.
 
 ## [Unreleased]
 
+## [1.0.2]
+
+### Fixed
+- Added an "FPGA" text label to the marketplace icon, matching the style of the sibling soldered-micropython-helper icon.
+
 ## [1.0.1]
 
 ### Fixed

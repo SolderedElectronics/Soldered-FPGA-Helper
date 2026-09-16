@@ -67,10 +67,15 @@ export function runStreamed(command: string, args: string[], out: ProcessOutput,
   });
 }
 
+// Set once the apio-upgrade check has run this session, success or failure,
+// so it only happens once per VS Code session instead of before every build.
+let apioUpgradeChecked = false;
+
 async function ensureApioInstalled(context: vscode.ExtensionContext, out: ProcessOutput): Promise<void> {
   const dir = venvDir(context);
+  const firstRun = !fs.existsSync(apioBin(context));
 
-  if (!fs.existsSync(apioBin(context))) {
+  if (firstRun) {
     out.write('Setting up FPGA build environment (first run only)...\r\n');
     const python = findSystemPython();
     await runStreamed(python, ['-m', 'venv', dir], out);
@@ -78,7 +83,20 @@ async function ensureApioInstalled(context: vscode.ExtensionContext, out: Proces
     // refuses to overwrite its own running executable when upgrading itself,
     // erroring with "To modify pip, please run the following command: ...".
     // `python -m pip` replaces a module instead of a running exe, so it works.
-    await runStreamed(venvPython(context), ['-m', 'pip', 'install', '--upgrade', 'pip', 'apio'], out);
+    await runStreamed(venvPython(context), ['-m', 'pip', 'install', '--upgrade', 'pip'], out);
+  }
+
+  if (firstRun || !apioUpgradeChecked) {
+    try {
+      await runStreamed(venvPython(context), ['-m', 'pip', 'install', '--upgrade', 'apio'], out);
+    } catch (err) {
+      // On first run there's nothing installed yet to fall back to.
+      if (firstRun) {
+        throw err;
+      }
+      out.write('Could not check for a newer apio (offline?) — using the installed version.\r\n');
+    }
+    apioUpgradeChecked = true;
   }
 
   await runStreamed(apioBin(context), ['packages', 'install'], out);

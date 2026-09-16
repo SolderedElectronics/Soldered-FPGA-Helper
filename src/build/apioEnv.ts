@@ -42,23 +42,49 @@ export class ProcessError extends Error {
   }
 }
 
-export function runStreamed(command: string, args: string[], out: ProcessOutput, cwd?: string): Promise<void> {
+export interface ExitWatchdog {
+  // Once this pattern matches the output, the process is treated as
+  // successful even if it never exits on its own — wait graceMs for a
+  // clean exit, then kill it.
+  successPattern: RegExp;
+  graceMs: number;
+}
+
+export function runStreamed(
+  command: string,
+  args: string[],
+  out: ProcessOutput,
+  cwd?: string,
+  watchdog?: ExitWatchdog
+): Promise<void> {
   return new Promise((resolve, reject) => {
     out.write(`$ ${command} ${args.join(' ')}\r\n`);
     const child = spawn(command, args, { cwd });
     let combinedOutput = '';
+    let killTimer: ReturnType<typeof setTimeout> | undefined;
+    let forcedAfterSuccess = false;
 
     const collect = (chunk: Buffer) => {
       const text = chunk.toString();
       combinedOutput += text;
       out.write(text.replace(/\n/g, '\r\n'));
+      if (watchdog && !killTimer && watchdog.successPattern.test(combinedOutput)) {
+        killTimer = setTimeout(() => {
+          forcedAfterSuccess = true;
+          out.write(`\r\n(${command} didn't exit on its own after finishing — closing it.)\r\n`);
+          child.kill();
+        }, watchdog.graceMs);
+      }
     };
     child.stdout.on('data', collect);
     child.stderr.on('data', collect);
 
     child.on('error', (err) => reject(err));
     child.on('close', (code) => {
-      if (code === 0) {
+      if (killTimer) {
+        clearTimeout(killTimer);
+      }
+      if (code === 0 || forcedAfterSuccess) {
         resolve();
       } else {
         reject(new ProcessError(`${command} exited with code ${code}`, combinedOutput));

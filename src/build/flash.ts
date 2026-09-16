@@ -30,5 +30,13 @@ export async function uploadProject(
 
   const bitstream = bitstreamPath(projectDir);
   out.write('\r\nMake sure the board is in bootloader mode before uploading.\r\n');
-  await runStreamed(loader, ['-b', 'tinyFPGABX', bitstream], out);
+  // TinyFPGA BX resets into the freshly-flashed bitstream and drops off the
+  // USB bus as soon as the write finishes, and the loader's own cleanup can
+  // hang trying to talk to the now-vanished bootloader device. Once it's
+  // printed success there's nothing left to wait on, so force it closed if
+  // it doesn't exit on its own.
+  await runStreamed(loader, ['-b', 'tinyFPGABX', bitstream], out, undefined, {
+    successPattern: /TinyProg: programming successful/,
+    graceMs: 3000,
+  });
 }

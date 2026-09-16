@@ -4,6 +4,11 @@ All notable changes to this extension are documented here.
 
 ## [Unreleased]
 
+## [1.0.6]
+
+### Fixed
+- Scaled up the marketplace icon so it fills the canvas properly instead of looking small/off-center in the Extensions list.
+
 ## [1.0.5]
 
 ### Fixed

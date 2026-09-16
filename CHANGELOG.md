@@ -4,6 +4,12 @@ All notable changes to this extension are documented here.
 
 ## [Unreleased]
 
+## [1.0.4]
+
+### Fixed
+- Marketplace icon now includes the Soldered S logo.
+- Removed a stray separator between the Soldered and GitHub links in the panel footer.
+
 ## [1.0.3]
 
 ### Fixed

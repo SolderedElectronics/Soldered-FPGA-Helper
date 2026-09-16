@@ -30,6 +30,14 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     strategy:
+      # The very first version of a not-yet-existing extension has to be
+      # created by exactly one request; racing it in parallel across targets
+      # gets some jobs "already exists" errors, and canceling siblings on a
+      # failure (fail-fast) can kill an in-flight upload mid-transfer and
+      # leave a broken asset for that target. Run one target at a time and
+      # let every target attempt regardless of another's outcome.
+      fail-fast: false
+      max-parallel: 1
       matrix:
         include:
           - target: win32-x64

@@ -4,7 +4,7 @@
   "publisher": "solderedelectronics",
   "author": "Soldered Electronics",
   "description": "An extension for developing FPGA projects directly inside Visual Studio Code, with first-class support for Soldered boards.",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "license": "MIT",
   "icon": "resources/icon.png",
   "engines": {

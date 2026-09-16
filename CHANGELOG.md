@@ -4,6 +4,12 @@ All notable changes to this extension are documented here.
 
 ## [Unreleased]
 
+## [1.0.3]
+
+### Fixed
+- The extension no longer hangs after a successful upload to the board.
+- Replaced the marketplace icon with a logic gate design.
+
 ## [1.0.2]
 
 ### Fixed

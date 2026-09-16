@@ -27,7 +27,7 @@
     "soldered"
   ],
   "scripts": {
-    "vscode:prepublish": "tsc -p ./"
+    "compile": "tsc -p ./"
   },
   "activationEvents": [],
   "contributes": {
